@@ -1,0 +1,3 @@
+v0.2
+Changed to actually look for movie for when Scipion renames them. It runs a bit
+slower though now looking for every movie.

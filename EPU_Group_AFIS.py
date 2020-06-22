@@ -167,8 +167,23 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
         for metadata_fn, optics_group in entries:
             base = os.path.basename(metadata_fn)
             root, ext = os.path.splitext(base)
-            f.write('{0}.{1}\t{2:d}\n'.format(os.path.join(movie_dir, root),
-                    ftype, optics_group))
+            movie_glob = '*{0}*_Fractions.{1}'.format(root, ftype)
+            movie_fn = None
+
+            for dirpath, dirnames, filenames in os.walk(movie_dir):
+                for filename in filenames:
+                    if fnmatch(filename, movie_glob):
+                        movie_fn = os.path.join(dirpath, filename)
+                        break
+
+                if movie_fn is not None:
+                    break
+
+            if movie_fn is None:
+                movie_fn = '{0}_Fractions.{1}'.format(
+                        os.path.join(movie_dir, root), ftype)
+
+            f.write('{0}\t{1:d}\n'.format(movie_fn, optics_group))
 
         f.write(' \n')
 
