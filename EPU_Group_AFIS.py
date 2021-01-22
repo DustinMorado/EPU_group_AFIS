@@ -27,7 +27,7 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
     for dirpath, dirnames, filenames in os.walk(xml_dir):
         for filename in filenames:
             if (fnmatch(filename, 'FoilHole_*_Data_*.xml')
-                    and not fnmatch(filename, '*_Fractions.xml')):
+                    and not fnmatch(filename, '*ractions.xml')):
 
                 metadata_fns.append(os.path.join(dirpath, filename))
 
@@ -167,7 +167,7 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
         for metadata_fn, optics_group in entries:
             base = os.path.basename(metadata_fn)
             root, ext = os.path.splitext(base)
-            movie_glob = '*{0}*_Fractions.{1}'.format(root, ftype)
+            movie_glob = '*{0}*ractions.{1}'.format(root, ftype)
             movie_fn = None
 
             for dirpath, dirnames, filenames in os.walk(movie_dir):
