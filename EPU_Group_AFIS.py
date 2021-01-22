@@ -24,7 +24,7 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
 
     metadata_fns = []
 
-    for dirpath, dirnames, filenames in os.walk(xml_dir):
+    for dirpath, dirnames, filenames in os.walk(xml_dir, followlinks=True):
         for filename in filenames:
             if (fnmatch(filename, 'FoilHole_*_Data_*.xml')
                     and not fnmatch(filename, '*ractions.xml')):
@@ -170,7 +170,7 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
             movie_glob = '*{0}*ractions.{1}'.format(root, ftype)
             movie_fn = None
 
-            for dirpath, dirnames, filenames in os.walk(movie_dir):
+            for dirpath, dirnames, filenames in os.walk(movie_dir, followlinks=True):
                 for filename in filenames:
                     if fnmatch(filename, movie_glob):
                         movie_fn = os.path.join(dirpath, filename)
