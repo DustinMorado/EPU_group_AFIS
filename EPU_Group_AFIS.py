@@ -15,12 +15,12 @@ import matplotlib.pyplot as plt
 
 from fnmatch import fnmatch
 from xml.etree import ElementTree
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, AgglomerativeClustering
 
 def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
          mtf_fn = 'MTF.star', voltage = 300.0, cs = 2.7, q0 = 0.1,
          ftype = 'mrc', movie_dir = '', output_fn = 'movies.star',
-         quiet = False):
+         algorithm = 'kmeans', quiet = False):
 
     metadata_fns = []
 
@@ -79,47 +79,73 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
     if len(beam_shifts) < n_clusters:
         raise ValueError('Number of clusters greater than number of points')
 
-    k_means = KMeans(n_clusters = n_clusters)
-    k_means.fit(shift_array)
-    optics_clusters = k_means.predict(shift_array)
-    cluster_centers = k_means.cluster_centers_
+    optics_clusters = None
+    cluster_centers = None
+
+    if algorithm == 'kmeans':
+        k_means = KMeans(n_clusters = n_clusters,
+                         init = 'k-means++',
+                         n_init = 100,
+                         algorithm = 'elkan').fit(shift_array)
+
+        optics_clusters = k_means.predict(shift_array)
+        cluster_centers = k_means.cluster_centers_
+    else:
+        hac = AgglomerativeClustering(n_clusters = n_clusters,
+                                      linkage = 'complete').fit(shift_array)
+
+        optics_clusters = hac.labels_
+        cluster_centers = [[np.average(shift_array[optics_clusters==x][:,0]),
+                            np.average(shift_array[optics_clusters==x][:,1])]
+                           for x in set(sorted(optics_clusters))]
 
     radii = [x[0]**2 + x[1]**2 for x in cluster_centers]
     sort_idxs = sorted(enumerate(radii), key=lambda x:x[1])
     origin = cluster_centers[sort_idxs[0][0]]
 
-    x_angle = np.pi
-    y_angle = np.pi
     x_vec = (1, 0)
+    x_unit = (1, 0)
+    x_angle = np.pi
+    x_length = 1
+
     y_vec = (0, 1)
+    y_unit = (0, 1)
+    y_angle = np.pi
+    y_length = 1
 
     for idx in range(1,5):
         point = cluster_centers[sort_idxs[idx][0]]
-        angle = np.arctan2(point[1] - origin[1], point[0] - origin[0])
+        x_coord = point[0] - origin[0]
+        y_coord = point[1] - origin[1]
 
-        if abs(angle) < x_angle:
-            x_angle = angle
-            x_vec = (point[0] - origin[0], point[1] - origin[1])
+        if x_coord > 0 and x_coord > abs(y_coord):
+            x_vec = (x_coord, y_coord)
+            x_angle = np.arctan2(y_coord, x_coord)
+            x_length = np.sqrt(x_vec[0]**2 + x_vec[1]**2)
+            x_unit = (x_vec[0] / x_length, x_vec[1] / x_length)
 
-        if abs(angle - (np.pi / 2)) < abs(y_angle - (np.pi / 2)):
-            y_angle = angle
-            y_vec = (point[0] - origin[0], point[1] - origin[1])
+
+        if y_coord > 0 and y_coord > abs(x_coord):
+            y_vec = (x_coord, y_coord)
+            y_angle = np.arctan2(y_coord, x_coord)
+            y_length = np.sqrt(y_vec[0]**2 + y_vec[1]**2)
+            y_unit = (y_vec[0] / y_length, y_vec[1] / y_length)
 
     grid_dists = []
 
     for idx, center in enumerate(cluster_centers):
         point = (center[0] - origin[0], center[1] - origin[1])
-        grid_x = np.round(   (point[0] * x_vec[0] + point[1] * x_vec[1])
-                           / (x_vec[0]**2 + x_vec[1]**2))
+        grid_x = np.round(
+            (point[0] * x_unit[0] + point[1] * x_unit[1]) / x_length)
 
-        grid_y = np.round(   (point[0] * y_vec[0] + point[1] * y_vec[1])
-                           / (y_vec[0]**2 + y_vec[1]**2))
+        grid_y = np.round(
+            (point[0] * y_unit[0] + point[1] * y_unit[1]) / y_length)
 
         dist = max(abs(grid_x), abs(grid_y))
         angle = (np.degrees(np.arctan2(grid_y, grid_x)) + 360) % 360
-        grid_dists.append((idx, dist, angle))
+        grid_dists.append((idx, grid_x, grid_y, dist, angle))
 
-    sort_idxs = [x[0] for x in sorted(grid_dists, key=lambda x:(x[1], x[2]))]
+    sort_idxs = [x[0] for x in sorted(grid_dists, key=lambda x:(x[3], x[4]))]
     optics_groups = [sort_idxs.index(x) + 1 for x in optics_clusters]
 
     if not quiet:
@@ -199,6 +225,10 @@ if __name__ == '__main__':
     parser.add_argument('--n_clusters', '-n', type = int, default = 1,
             help = 'Number of Optics Groups (1 = interactively choose. [1]')
 
+    parser.add_argument('--algorithm', type = str, default = 'kmeans',
+            choices = ['kmeans', 'hac'],
+            help = 'Clustering algorthim to use. {kmeans, hac} [kmeans]')
+
     parser.add_argument('--apix', type = float, default = 1.00,
             help = 'Pixel size of micrographs. [1.00]')
 
@@ -238,5 +268,5 @@ if __name__ == '__main__':
          ftype = args.ftype,
          movie_dir = args.movie_dir,
          output_fn = args.output_fn,
+         algorithm = args.algorithm,
          quiet = args.quiet)
-
