@@ -19,8 +19,8 @@ from sklearn.cluster import KMeans, AgglomerativeClustering
 
 def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
          mtf_fn = 'MTF.star', voltage = 300.0, cs = 2.7, q0 = 0.1,
-         ftype = 'mrc', movie_dir = '', output_fn = 'movies.star',
-         algorithm = 'kmeans', quiet = False):
+         ftype = 'mrc', movie_dir = '', movie_suffix = 'Fractions',
+         output_fn = 'movies.star', algorithm = 'kmeans', quiet = False):
 
     metadata_fns = []
 
@@ -206,8 +206,8 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
                     break
 
             if movie_fn is None:
-                movie_fn = '{0}_Fractions.{1}'.format(
-                        os.path.join(movie_dir, root), ftype)
+                movie_fn = '{0}_{1}.{2}'.format(
+                        os.path.join(movie_dir, root), movie_suffix, ftype)
 
             f.write('{0}\t{1:d}\n'.format(movie_fn, optics_group))
 
@@ -250,6 +250,9 @@ if __name__ == '__main__':
     parser.add_argument('--movie_dir', '-d', type = str, default = '.',
             help = 'Path to directory with micrograph movies. [.]')
 
+    parser.add_argument('--movie_suffix', type = str, default = 'Fractions',
+            help = 'Suffix to append to micrograph movie filenames. [Fractions]')
+
     parser.add_argument('--output_fn', '-o', type = str,
             default = 'movies.star',
             help = 'Path to output STAR file. [movies.star]')
@@ -267,6 +270,7 @@ if __name__ == '__main__':
          q0 = args.q0,
          ftype = args.ftype,
          movie_dir = args.movie_dir,
+         movie_suffix = args.movie_suffix,
          output_fn = args.output_fn,
          algorithm = args.algorithm,
          quiet = args.quiet)
