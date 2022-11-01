@@ -186,7 +186,7 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
                      optics_group, mtf_fn, apix, voltage, cs, q0))
 
         f.write(' \n\n# version 30001\n\n')
-        f.write('data_movies\n\nloop_\n')
+        f.write('data_micrographs\n\nloop_\n')
         f.write('_rlnMicrographMovieName #1 \n')
         f.write('_rlnOpticsGroup #2 \n')
 
