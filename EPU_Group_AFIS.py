@@ -117,7 +117,6 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
         point = cluster_centers[sort_idxs[idx][0]]
         x_coord = point[0] - origin[0]
         y_coord = point[1] - origin[1]
-
         if x_coord > 0 and x_coord > abs(y_coord):
             x_vec = (x_coord, y_coord)
             x_angle = np.arctan2(y_coord, x_coord)
@@ -186,14 +185,19 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
                      optics_group, mtf_fn, apix, voltage, cs, q0))
 
         f.write(' \n\n# version 30001\n\n')
-        f.write('data_movies\n\nloop_\n')
+        f.write('data_micrographs\n\nloop_\n')
         f.write('_rlnMicrographMovieName #1 \n')
         f.write('_rlnOpticsGroup #2 \n')
 
         for metadata_fn, optics_group in entries:
             base = os.path.basename(metadata_fn)
             root, ext = os.path.splitext(base)
-            movie_glob = '*{0}*ractions.{1}'.format(root, ftype)
+            print(ftype)
+            if ftype == '.eer':
+                movie_glob= '*{0}*EER.eer'.format(root)
+                print(movie_glob)
+            else:
+                movie_glob = '*{0}*ractions.{1}'.format(root, ftype)
             movie_fn = None
 
             for dirpath, dirnames, filenames in os.walk(movie_dir, followlinks=True):
